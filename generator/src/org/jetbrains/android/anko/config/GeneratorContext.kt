@@ -3,15 +3,11 @@ package org.jetbrains.android.anko.config
 import org.jetbrains.android.anko.annotations.*
 import org.jetbrains.android.anko.sources.AndroidHomeSourceProvider
 import org.jetbrains.android.anko.sources.SourceManager
-import org.jetbrains.android.anko.templates.JtwigTemplateProvider
-import org.jetbrains.android.anko.templates.MustacheTemplateProvider
-import org.jetbrains.android.anko.templates.TemplateManager
 import java.io.File
 
 class GeneratorContext(
         val annotationManager: AnnotationManager,
         val sourceManager: SourceManager,
-        val templateManager: TemplateManager,
         val logger: Logger,
         val configuration: AnkoConfiguration
 ) {
@@ -23,13 +19,9 @@ class GeneratorContext(
             val annotationManager = AnnotationManager(CompoundAnnotationProvider(
                     CachingAnnotationProvider(zipFileProvider), CachingAnnotationProvider(directoryProvider)))
             val sourceManager = SourceManager(AndroidHomeSourceProvider(config[ANDROID_SDK_LOCATION], 27))
-            val templateManager = TemplateManager(
-                    File(propsDir, "templates"),
-                    MustacheTemplateProvider(),
-                    JtwigTemplateProvider())
             val logger = Logger(logLevel)
 
-            return GeneratorContext(annotationManager, sourceManager, templateManager, logger, config)
+            return GeneratorContext(annotationManager, sourceManager, logger, config)
         }
     }
 }
@@ -42,9 +34,6 @@ interface WithGeneratorContext {
 
     val sourceManager: SourceManager
         get() = context.sourceManager
-
-    val templateManager: TemplateManager
-        get() = context.templateManager
 
     val logger: Logger
         get() = context.logger

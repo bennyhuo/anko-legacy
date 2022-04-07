@@ -29,13 +29,13 @@ sourceSets {
 }
 
 dependencies {
-    implementation('com.github.javaparser:javaparser-core:3.0.1')
-    implementation('org.jtwig:jtwig-core:5.65')
-    implementation('org.jtwig:jtwig-spaceless-extension:1.45')
-    implementation('com.samskivert:jmustache:1.10')
-    implementation('com.google.code.gson:gson:2.8.0')
-    implementation('org.slf4j:slf4j-simple:1.7.22')
-    implementation('org.ow2.asm:asm-debug-all:5.1')
-    implementation("org.jetbrains.kotlinx:kotlinx.dom:0.0.10")
-    implementation("org.jetbrains.kotlin:kotlin-stdlib")
+    api('com.github.javaparser:javaparser-core:3.0.1')
+    api('org.jtwig:jtwig-core:5.65')
+    api('org.jtwig:jtwig-spaceless-extension:1.45')
+    api('com.samskivert:jmustache:1.10')
+    api('com.google.code.gson:gson:2.8.0')
+    api('org.slf4j:slf4j-simple:1.7.22')
+    api('org.ow2.asm:asm-debug-all:5.1')
+    api("org.jetbrains.kotlinx:kotlinx.dom:0.0.10")
+    api("org.jetbrains.kotlin:kotlin-stdlib")
 }
