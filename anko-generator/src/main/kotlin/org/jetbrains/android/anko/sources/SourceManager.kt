@@ -22,6 +22,8 @@ import com.github.javaparser.ast.body.TypeDeclaration
 import com.github.javaparser.ast.visitor.VoidVisitorAdapter
 import org.jetbrains.android.anko.utils.getJavaClassName
 
+val defaultSourceManager = SourceManager(EmptySourceProvider())
+
 class SourceManager(private val provider: SourceProvider) {
 
     fun getParameterNames(classFqName: String, methodName: String, argumentJavaTypes: List<String>): List<String>? {

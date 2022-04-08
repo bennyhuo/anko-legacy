@@ -37,6 +37,9 @@ private fun mapJavaToKotlinType(str: String): String {
         "java.lang.String" -> "String"
         "java.lang.Integer" -> "Int"
         "java.lang.Object" -> "Any"
+        "java.util.List" -> "List"
+        "java.util.Set" -> "Set"
+        "java.util.Map" -> "Map"
         else -> str
     }
 }
@@ -120,7 +123,7 @@ fun genericTypeToKType(
     val classifier = type.classifier
 
     val fqName = when (classifier) {
-        is TopLevelClass -> classifier.internalName.replace('/', '.').replace('$', '.')
+        is TopLevelClass -> mapJavaToKotlinType(classifier.internalName.replace('/', '.').replace('$', '.'))
         is BaseType -> Type.getType(classifier.descriptor.toString()).asString(isNullable = false)
         else -> error("Invalid classifier type: $classifier")
     }

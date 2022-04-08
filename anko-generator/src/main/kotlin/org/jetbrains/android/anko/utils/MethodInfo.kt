@@ -16,8 +16,7 @@
 
 package org.jetbrains.android.anko
 
-import org.jetbrains.android.anko.annotations.ExternalAnnotation.NotNull
-import org.jetbrains.android.anko.config.GeneratorContext
+import org.jetbrains.android.anko.sources.defaultSourceManager
 import org.jetbrains.android.anko.utils.ImportList
 import org.jetbrains.android.anko.utils.KMethod
 import org.jetbrains.android.anko.utils.KType
@@ -33,7 +32,10 @@ import org.jetbrains.android.anko.utils.parseGenericMethodSignature
 import org.jetbrains.android.anko.utils.toKType
 import org.objectweb.asm.Opcodes
 import org.objectweb.asm.Type
+import org.objectweb.asm.tree.AnnotationNode
 import org.objectweb.asm.tree.MethodNode
+
+const val DEFAULT_NULLABILITY = false
 
 private val specialLayoutParamsArguments = mapOf(
     "width" to "android.view.ViewGroup.LayoutParams.WRAP_CONTENT",
@@ -50,49 +52,79 @@ val MethodNode.parameterRawTypes: Array<Type>
     get() = Type.getArgumentTypes(desc)
 
 fun getParameterKTypes(node: MethodNode): List<KType> {
+    val parameterAnnotations = node.parameterAnnotations()
     if (node.signature == null) {
-        return node.parameterRawTypes.map { KType(it.asString(false), isNullable = false) }
+        return node.parameterRawTypes.mapIndexed { index, type ->
+            KType(
+                type.asString(false),
+                isNullable = parameterAnnotations.getOrNull(index)?.nullable() ?: DEFAULT_NULLABILITY
+            )
+        }
     }
 
     val parsed = parseGenericMethodSignature(node.signature)
-    return parsed.valueParameters.map { genericTypeToKType(it.genericType) }
+    return parsed.valueParameters.mapIndexed { index, type ->
+        genericTypeToKType(
+            type.genericType,
+            isNullable = parameterAnnotations.getOrNull(index)?.nullable() ?: DEFAULT_NULLABILITY
+        )
+    }
 }
 
-fun MethodNodeWithClass.toKMethod(context: GeneratorContext): KMethod {
+fun MethodNode.parameterAnnotations(): List<List<AnnotationNode>> {
+    val parameterAnnotations = ArrayList<List<AnnotationNode>>()
+
+    for (i in 0 until maxOf(visibleAnnotableParameterCount, invisibleAnnotableParameterCount)) {
+        val list = ArrayList<AnnotationNode>()
+        invisibleParameterAnnotations?.getOrNull(i)?.let { list.addAll(it) }
+        visibleParameterAnnotations?.getOrNull(i)?.let { list.addAll(it) }
+        parameterAnnotations.add(list)
+    }
+    return parameterAnnotations
+}
+
+fun AnnotationNode?.nullable(): Boolean? {
+    return when (this?.desc) {
+        "Lorg/jetbrains/annotations/NotNull;" -> false
+        "Lorg/jetbrains/annotations/Nullable;" -> true
+        else -> null
+    }
+}
+
+fun List<AnnotationNode>?.nullable(): Boolean? {
+    return this?.firstNotNullOfOrNull { it.nullable() }
+}
+
+fun MethodNodeWithClass.toKMethod(): KMethod {
     val parameterTypes = getParameterKTypes(this.method)
     val localVariables = method.localVariables?.map { it.index to it }?.toMap() ?: emptyMap()
 
     val parameterRawTypes = this.method.parameterRawTypes
     val javaArgs = parameterRawTypes.map(Type::asJavaString)
-    val parameterNames = context.sourceManager.getParameterNames(clazz.fqName, method.name, javaArgs)
+    val parameterNames = defaultSourceManager.getParameterNames(clazz.fqName, method.name, javaArgs)
     val javaArgsString = javaArgs.joinToString()
     val methodAnnotationSignature =
         "${clazz.fqName} ${method.returnType.asJavaString()} ${method.name}($javaArgsString)"
 
     var nameIndex = if (method.isStatic) 0 else 1
     val parameters = parameterTypes.mapIndexed { index, type ->
-        val parameterAnnotationSignature = "$methodAnnotationSignature $index"
         val isSimpleType = parameterRawTypes[index].isSimpleType
-        val isNullable =
-            !isSimpleType && !context.annotationManager.hasAnnotation(parameterAnnotationSignature, NotNull)
-
         val parameterName = parameterNames?.get(index) ?: localVariables[nameIndex]?.name ?: "p$index"
         nameIndex += parameterRawTypes[index].size
-        KVariable(parameterName, type.copy(isNullable = isNullable))
+        KVariable(parameterName, type)
     }
 
     return KMethod(method.name, parameters, method.returnType.toKType())
 }
 
-fun MethodNodeWithClass.formatArguments(context: GeneratorContext): String {
-    return toKMethod(context).parameters.joinToString { "${it.name}: ${it.type}" }
+fun MethodNodeWithClass.formatArguments(): String {
+    return toKMethod().parameters.joinToString { "${it.name}: ${it.type}" }
 }
 
 fun MethodNodeWithClass.formatLayoutParamsArguments(
-    context: GeneratorContext,
     importList: ImportList
 ): List<String> {
-    return toKMethod(context).parameters.map { param ->
+    return toKMethod().parameters.map { param ->
         val renderType = importList.let { it[param.type] }
 
         val defaultValue = specialLayoutParamsArguments[param.name]
@@ -105,20 +137,20 @@ fun MethodNodeWithClass.formatLayoutParamsArguments(
     }
 }
 
-fun MethodNodeWithClass.formatLayoutParamsArgumentsInvoke(context: GeneratorContext): String {
-    return toKMethod(context).parameters.joinToString { param ->
+fun MethodNodeWithClass.formatLayoutParamsArgumentsInvoke(): String {
+    return toKMethod().parameters.joinToString { param ->
         val realName = specialLayoutParamsNames.getOrElse(param.name, { param.name })
         val explicitNotNull = if (param.type.isNullable) "!!" else ""
         "$realName$explicitNotNull"
     }
 }
 
-fun MethodNodeWithClass.formatArgumentsTypes(context: GeneratorContext): String {
-    return toKMethod(context).parameters.joinToString { it.type.toString() }
+fun MethodNodeWithClass.formatArgumentsTypes(): String {
+    return toKMethod().parameters.joinToString { it.type.toString() }
 }
 
-fun MethodNodeWithClass.formatArgumentsNames(context: GeneratorContext): String {
-    return toKMethod(context).parameters.joinToString { it.name }
+fun MethodNodeWithClass.formatArgumentsNames(): String {
+    return toKMethod().parameters.joinToString { it.name }
 }
 
 fun MethodNode.isGetter(): Boolean {
@@ -148,6 +180,9 @@ val MethodNode.isOverridden: Boolean
 
 val MethodNode.isStatic: Boolean
     get() = (access and Opcodes.ACC_STATIC) != 0
+
+val MethodNode.isSynthetic: Boolean
+    get() = (access and Opcodes.ACC_SYNTHETIC) != 0
 
 val MethodNode.returnType: Type
     get() = Type.getReturnType(desc)

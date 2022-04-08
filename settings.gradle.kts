@@ -1,5 +1,4 @@
-rootProject.name = "anko-generator"
-include(":generator")
+include(":anko-generator")
 
 pluginManagement {
     repositories {

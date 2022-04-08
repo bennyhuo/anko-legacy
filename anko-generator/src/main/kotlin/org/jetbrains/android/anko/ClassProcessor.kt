@@ -34,13 +34,7 @@ class ClassProcessor(val artifact: Artifact) {
     }
 
     private fun extractClasses(): Sequence<Pair<InputStream, Boolean>> {
-        val hasTargetJars = artifact.targetJars.isNotEmpty()
-
-        val platformClasses = (artifact.platformJars - artifact.targetJars)
-            .asSequence().flatMap { getEntries(it) }.map { it to hasTargetJars }
-        val targetJars = artifact.targetJars.asSequence().flatMap { getEntries(it) }.map { it to false }
-
-        return platformClasses + targetJars
+        return artifact.jars.asSequence().flatMap { getEntries(it) }.map { it to false }
     }
 
     private fun getEntries(file: File): Sequence<InputStream> {

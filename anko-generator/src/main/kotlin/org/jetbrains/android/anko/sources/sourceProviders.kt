@@ -25,6 +25,10 @@ interface SourceProvider {
     fun parse(fqName: String): CompilationUnit?
 }
 
+class EmptySourceProvider : SourceProvider {
+    override fun parse(fqName: String) = null
+}
+
 class AndroidHomeSourceProvider(androidSdkLocation: File, version: Int) : SourceProvider {
     private val baseDir = File(androidSdkLocation, "sources/android-$version")
 
