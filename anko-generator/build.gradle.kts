@@ -6,6 +6,11 @@ plugins {
 group = property("GROUP").toString()
 version = property("VERSION_NAME").toString()
 
+java {
+    sourceCompatibility = JavaVersion.VERSION_11
+    targetCompatibility = JavaVersion.VERSION_11
+}
+
 dependencies {
     api("org.jetbrains.kotlin:kotlin-stdlib")
 
