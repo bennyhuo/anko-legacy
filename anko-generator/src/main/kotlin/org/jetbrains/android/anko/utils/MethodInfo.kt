@@ -17,6 +17,7 @@
 package org.jetbrains.android.anko
 
 import org.jetbrains.android.anko.sources.defaultSourceManager
+import org.jetbrains.android.anko.utils.GenericMethodSignature
 import org.jetbrains.android.anko.utils.ImportList
 import org.jetbrains.android.anko.utils.KMethod
 import org.jetbrains.android.anko.utils.KType
@@ -53,17 +54,17 @@ val MethodNode.parameterRawTypes: Array<Type>
 
 fun getParameterKTypes(node: MethodNode): List<KType> {
     val parameterAnnotations = node.parameterAnnotations()
-    if (node.signature == null) {
-        return node.parameterRawTypes.mapIndexed { index, type ->
-            KType(
-                type.asString(false),
-                isNullable = parameterAnnotations.getOrNull(index)?.nullable() ?: DEFAULT_NULLABILITY
-            )
-        }
+    return node.parameterRawTypes.mapIndexed { index, type ->
+        KType(
+            type.asString(false),
+            isNullable = parameterAnnotations.getOrNull(index)?.nullable() ?: DEFAULT_NULLABILITY
+        )
     }
+}
 
-    val parsed = parseGenericMethodSignature(node.signature)
-    return parsed.valueParameters.mapIndexed { index, type ->
+fun getGenericParameterKTypes(node: MethodNode, genericMethodSignature: GenericMethodSignature): List<KType> {
+    val parameterAnnotations = node.parameterAnnotations()
+    return genericMethodSignature.valueParameters.mapIndexed { index, type ->
         genericTypeToKType(
             type.genericType,
             isNullable = parameterAnnotations.getOrNull(index)?.nullable() ?: DEFAULT_NULLABILITY
@@ -96,7 +97,13 @@ fun List<AnnotationNode>?.nullable(): Boolean? {
 }
 
 fun MethodNodeWithClass.toKMethod(): KMethod {
-    val parameterTypes = getParameterKTypes(this.method)
+    val parsedSignature = if (this.method.signature != null) {
+        parseGenericMethodSignature(this.method.signature)
+    } else null
+
+    val parameterTypes = if (parsedSignature == null) getParameterKTypes(this.method)
+    else getGenericParameterKTypes(this.method, parsedSignature)
+
     val localVariables = method.localVariables?.map { it.index to it }?.toMap() ?: emptyMap()
 
     val parameterRawTypes = this.method.parameterRawTypes
@@ -114,7 +121,12 @@ fun MethodNodeWithClass.toKMethod(): KMethod {
         KVariable(parameterName, type)
     }
 
-    return KMethod(method.name, parameters, method.returnType.toKType())
+    return KMethod(
+        method.name,
+        parsedSignature?.typeParameters ?: emptyList(),
+        parameters,
+        method.returnType.toKType()
+    )
 }
 
 fun MethodNodeWithClass.formatArguments(): String {

@@ -4,7 +4,8 @@ data class KType(
     val fqName: String,
     val isNullable: Boolean = false,
     val variance: Variance = KType.Variance.INVARIANT,
-    val arguments: List<KType> = emptyList()
+    val arguments: List<KType> = emptyList(),
+    val isTypeVariable: Boolean = false
 ) {
     init {
         assert(!fqName.endsWith("?"))

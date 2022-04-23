@@ -125,6 +125,7 @@ fun genericTypeToKType(
     val fqName = when (classifier) {
         is TopLevelClass -> mapJavaToKotlinType(classifier.internalName.replace('/', '.').replace('$', '.'))
         is BaseType -> Type.getType(classifier.descriptor.toString()).asString(isNullable = false)
+        is TypeVariable -> classifier.name
         else -> error("Invalid classifier type: $classifier")
     }
 
@@ -141,7 +142,7 @@ fun genericTypeToKType(
         }
     }
 
-    return KType(fqName, isNullable, variance, args)
+    return KType(fqName, isNullable, variance, args, classifier is TypeVariable)
 }
 
 fun getPackageName(fqName: String): String {
