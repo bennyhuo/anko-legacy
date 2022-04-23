@@ -33,13 +33,13 @@ val Type.fqName: String
 
 private fun mapJavaToKotlinType(str: String): String {
     return when (str) {
-        "java.lang.CharSequence" -> "CharSequence"
-        "java.lang.String" -> "String"
-        "java.lang.Integer" -> "Int"
-        "java.lang.Object" -> "Any"
-        "java.util.List" -> "List"
-        "java.util.Set" -> "Set"
-        "java.util.Map" -> "Map"
+        "java.lang.CharSequence" -> "kotlin.CharSequence"
+        "java.lang.String" -> "kotlin.String"
+        "java.lang.Integer" -> "kotlin.Int"
+        "java.lang.Object" -> "kotlin.Any"
+        "java.util.List" -> "kotlin.collections.List"
+        "java.util.Set" -> "kotlin.collections.Set"
+        "java.util.Map" -> "kotlin.collections.Map"
         else -> str
     }
 }
@@ -51,21 +51,21 @@ fun Type.toKType(isNullable: Boolean = false): KType {
 fun Type.asString(isNullable: Boolean = true): String {
     val nullability = if (isNullable) "?" else ""
     return when (sort) {
-        Type.BOOLEAN -> "Boolean"
-        Type.INT -> "Int"
-        Type.FLOAT -> "Float"
-        Type.DOUBLE -> "Double"
-        Type.LONG -> "Long"
-        Type.BYTE -> "Byte"
-        Type.CHAR -> "Char"
-        Type.SHORT -> "Short"
-        Type.VOID -> "Unit"
+        Type.BOOLEAN -> "kotlin.Boolean"
+        Type.INT -> "kotlin.Int"
+        Type.FLOAT -> "kotlin.Float"
+        Type.DOUBLE -> "kotlin.Double"
+        Type.LONG -> "kotlin.Long"
+        Type.BYTE -> "kotlin.Byte"
+        Type.CHAR -> "kotlin.Char"
+        Type.SHORT -> "kotlin.Short"
+        Type.VOID -> "kotlin.Unit"
         Type.ARRAY -> when (elementType.sort) {
-            Type.INT -> "IntArray$nullability"
-            Type.FLOAT -> "FloatArray$nullability"
-            Type.DOUBLE -> "DoubleArray$nullability"
-            Type.LONG -> "LongArray$nullability"
-            else -> "Array<" + mapJavaToKotlinType(elementType.asString(isNullable = false)) + ">$nullability"
+            Type.INT -> "kotlin.IntArray$nullability"
+            Type.FLOAT -> "kotlin.FloatArray$nullability"
+            Type.DOUBLE -> "kotlin.DoubleArray$nullability"
+            Type.LONG -> "kotlin.LongArray$nullability"
+            else -> "kotlin.Array<" + mapJavaToKotlinType(elementType.asString(isNullable = false)) + ">$nullability"
         }
         else -> mapJavaToKotlinType(fqName) + nullability
     }

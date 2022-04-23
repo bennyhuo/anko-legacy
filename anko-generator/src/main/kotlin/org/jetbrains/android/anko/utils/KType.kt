@@ -12,7 +12,7 @@ data class KType(
 
     companion object {
         val STAR_TYPE = KType("*", isNullable = false)
-        val ANY_TYPE = KType("Any")
+        val ANY_TYPE = KType("kotlin.Any")
     }
 
     enum class Variance {

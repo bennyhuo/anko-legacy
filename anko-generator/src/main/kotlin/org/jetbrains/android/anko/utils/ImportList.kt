@@ -8,9 +8,16 @@ class ImportList {
         get() = myImports
 
     fun isEmpty() = myImports.isEmpty()
-
     fun hasImport(fqName: String) = fqName in myImports
 
+    override fun toString(): String {
+        return myImports.joinToString( "\n", postfix = "\n") { "import $it" }
+    }
+
+    fun clear() {
+        myImports.clear()
+        myClassNames.clear()
+    }
     operator fun get(fqName: String): String {
         val (packageName, className) = fqName.substringBeforeLast("?").toPackageClassName()
         val nameToImport = getNameToImport(packageName, className)
@@ -21,7 +28,7 @@ class ImportList {
         if (className in myClassNames) return fqName
 
         add(nameToImport, className)
-        return className
+        return className + if(fqName.endsWith('?')) "?" else ""
     }
 
     operator fun get(type: KType): KType {
@@ -36,7 +43,7 @@ class ImportList {
     }
 
     private fun getNameToImport(packageName: String, className: String): String {
-        return packageName + '.' + className.substringBefore('.')
+        return packageName + '.' + className.substringBefore('<').substringBefore('.')
     }
 
     private fun String.toPackageClassName(): Pair<String, String> {
