@@ -34,9 +34,11 @@ val Type.fqName: String
 private fun mapJavaToKotlinType(str: String): String {
     return when (str) {
         "java.lang.CharSequence" -> "kotlin.CharSequence"
+        "java.lang.Number" -> "kotlin.Number"
         "java.lang.String" -> "kotlin.String"
         "java.lang.Integer" -> "kotlin.Int"
         "java.lang.Object" -> "kotlin.Any"
+        "java.lang.Comparable" -> "kotlin.Comparable"
         "java.util.List" -> "kotlin.collections.List"
         "java.util.Set" -> "kotlin.collections.Set"
         "java.util.Map" -> "kotlin.collections.Map"
