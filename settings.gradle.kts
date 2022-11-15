@@ -1,4 +1,4 @@
-include(":anko-generator")
+include(":anko-asm-parser")
 
 pluginManagement {
     repositories {

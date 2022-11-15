@@ -28,23 +28,3 @@ interface SourceProvider {
 class EmptySourceProvider : SourceProvider {
     override fun parse(fqName: String) = null
 }
-
-class AndroidHomeSourceProvider(androidSdkLocation: File, version: Int) : SourceProvider {
-    private val baseDir = File(androidSdkLocation, "sources/android-$version")
-
-    init {
-        if (!baseDir.exists()) throw IllegalStateException("${baseDir.absolutePath} does not exist")
-    }
-
-    override fun parse(fqName: String): CompilationUnit? {
-        val packageName = getPackageName(fqName)
-        val packageDir = File(baseDir, packageName.replace('.', '/'))
-        if (!packageDir.exists()) return null
-
-        val filename = fqName.substring(packageName.length + 1).substringBefore('.') + ".java"
-        val file = File(packageDir, filename)
-        if (!file.exists()) return null
-
-        return JavaParser.parse(file)
-    }
-}

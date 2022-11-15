@@ -8,5 +8,3 @@ class Artifact(val name: String, val jars: List<File>) {
         return "$name: { jars = \"${jars.joinToString()}\"}"
     }
 }
-
-class Tunes(val excludedClasses: Set<String>)
